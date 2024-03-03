@@ -16,7 +16,7 @@ driver: webdriver = None
 async def startup_event():
     global driver
     driver = driver.create_webdriver(
-        driver_path = os.getenv(PurePath("APPDATA").joinpath("chromedriver").as_posix()),
+        driver_path = os.getenv("APPDATA").joinpath("chromedriver").as_posix(),
         driver_arguments = ["--headless"]
     )
 

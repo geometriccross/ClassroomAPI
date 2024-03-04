@@ -37,8 +37,6 @@ def login_to_google_classroom(driver: webdriver, username: username, password: p
     Google Takeoutにアクセスしてログインします。
     Googleアカウントのユーザー名とパスワードを使用して、Google Takeoutにログインします。
     """
-
-    driver.get("https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Ftakeout.google.com%2F%3Fhl%3Dja&followup=https%3A%2F%2Ftakeout.google.com%2F%3Fhl%3Dja&hl=ja&ifkv=ATuJsjzLD6xO4Hk_ZGE3sE9VhY6ACjrc0naKIJQ6DUlMF4eTd7LAnFfft-R23r6VqUjo71Wx7IJo4w&osid=1&passive=1209600&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1728425499%3A1709466484511131&theme=glif")
     
     # ログインフォームを探す
     if username_input := wait_for_element(driver, By.ID, "identifierId"):
@@ -54,3 +52,16 @@ def login_to_google_classroom(driver: webdriver, username: username, password: p
         easy_to_login.click()
 
     return driver
+
+def login_collage(driver: webdriver, username: str, email: str, password: str):
+    """大学アカウントにログインを要求された場合"""
+    
+    if username_input := wait_for_element(driver, By.XPATH, "//input[@id='j_username']"):
+        username_input.send_keys(username)
+        
+    if password_input := wait_for_element(driver, By.XPATH, "//input[@id='j_password']"):
+        password_input.send_keys(password)
+        
+    if submit_button := wait_for_element(driver, By.XPATH, "//button[@type='submit']"):
+        submit_button.click()
+

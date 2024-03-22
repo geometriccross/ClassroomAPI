@@ -1,5 +1,5 @@
 from typing import *
-from pathlib import PurePath
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -12,17 +12,18 @@ from selenium.common.exceptions import TimeoutException
 username = str
 password = str
 
-def create_webdriver(driver_path: PurePath, driver_arguments: List[str]):
-    # Chromeのドライバーサービスを作成
-    service = Service(driver_path)
+def create_webdriver(driver_path: Path, driver_arguments: List[str]):
+    service = Service(driver_path
+        if driver_path.exists()
+        else driver_path.mkdir(parents=True, exist_ok=True)
+    )
 
-    # ブラウザの設定
     options = webdriver.ChromeOptions()
     
+    #headlessなどのオプションを追加
     for arg in driver_arguments:
         options.add_argument(arg)
 
-    # ブラウザを開く
     return webdriver.Chrome(service=service, options=options)
 
 def wait_for_element(driver: webdriver, by: By, value: str, timeout: int = 10):
@@ -64,4 +65,3 @@ def login_collage(driver: webdriver, username: str, email: str, password: str):
         
     if submit_button := wait_for_element(driver, By.XPATH, "//button[@type='submit']"):
         submit_button.click()
-

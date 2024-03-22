@@ -1,17 +1,19 @@
+from typing import List, Dict, Any
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.remote.webelement import WebElement
 
 username = str
 password = str
 
-def wait_for_element(driver: webdriver, by: By, value: str, timeout: int = 10):
+def wait_for_element(driver: webdriver, by: By, value: str, timeout: int = 10) -> List[WebElement]:
     try:
-        return WebDriverWait(driver, timeout).until(EC.presence_of_element_located((by, value)))
+        return WebDriverWait(driver, timeout).until(EC.presence_of_all_elements_located((by, value)))
     except TimeoutException:
         print(f"Error: Timeout waiting for element by {by} with value {value}")
         return None
@@ -48,3 +50,37 @@ def login_collage(driver: webdriver, username: str, email: str, password: str):
         
     if submit_button := wait_for_element(driver, By.XPATH, "//button[@type='submit']"):
         submit_button.click()
+
+def sections(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
+    """
+    Google Classroomのセクション名とURLを取得します。
+    
+    :param driver: WebDriverのインスタンス
+    :param timeout: 要素を待つ最大時間
+    :return: セクション名をキー、URLを値とする辞書
+    """
+    driver.get("https://classroom.google.com/u/0/h")
+    key_elements = wait_for_element(
+        driver=driver, 
+        by=By.XPATH, 
+        value="//div[@class='YVvGBb z3vRcc-ZoZQ1']",
+        timeout=timeout
+    )
+    
+    url_elements = wait_for_element(
+        driver=driver, 
+        by=By.XPATH, 
+        value="//a[@class='onkcGd ZmqAt Vx8Sxd']",
+        timeout=timeout
+    )
+    
+    if key_elements is None or url_elements is None:
+        raise ValueError("Error: Unable to locate keys or URLs.")
+    
+    keys = [key.text for key in key_elements]
+    urls = [url.get_attribute("href") for url in url_elements]
+        
+    if len(keys) == len(urls):
+        return dict(zip(keys, urls))
+    else:
+        raise ValueError("Error: The number of keys and urls do not match.")

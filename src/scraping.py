@@ -1,5 +1,4 @@
-from time import sleep
-from typing import List, Dict, Any
+from typing import List, Dict
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -68,14 +67,14 @@ def sections(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
     :return: セクション名をキー、URLを値とする辞書
     """
     driver.get("https://classroom.google.com/u/0/h")
-    key_elements = wait_for_element(
+    key_elements = wait_for_elements(
         driver=driver, 
         by=By.XPATH, 
         value="//div[@class='YVvGBb z3vRcc-ZoZQ1']",
         timeout=timeout
     )
     
-    url_elements = wait_for_element(
+    url_elements = wait_for_elements(
         driver=driver, 
         by=By.XPATH, 
         value="//a[@class='onkcGd ZmqAt Vx8Sxd']",

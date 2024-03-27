@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from selenium.webdriver.chrome.webdriver import WebDriver
 
-from src.driver import create_webdriver
+from src.driver import generate_driver_instances
 from src import scraping
 
 load_dotenv(".env")
@@ -21,7 +21,7 @@ def test_driver() -> WebDriver:
     test_dir = Path("test/chrome_drivers")
     test_dir.mkdir(parents=True, exist_ok=True)
     
-    driver_generator = create_webdriver(test_dir, ["--headless"])
+    driver_generator = generate_driver_instances(test_dir, ["--headless"])
     driver = next(driver_generator)
     yield driver
     

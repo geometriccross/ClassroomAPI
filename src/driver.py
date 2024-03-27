@@ -23,7 +23,7 @@ def webdriver_profile_generator(prefix: Path) -> Generator[Path, None, None]:
         yield Path(profile_path)
         profile_index += 1
 
-def create_webdriver(profile_dir: Path, driver_arguments: List[str]) -> Generator[WebDriver, None, None]:
+def generate_driver_instances(profile_dir: Path, driver_arguments: List[str]) -> Generator[WebDriver, None, None]:
     """
     新しいChromeドライバーのインスタンスを作成する
 

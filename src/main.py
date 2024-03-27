@@ -17,10 +17,9 @@ drivers: list[webdriver.Chrome] = []
 async def startup_event():
     global drivers
     drivers.append(
-        driver.create_webdriver(
-            driver_path = Path(os.getenv("APPDATA")).
-                            joinpath("classroomAPI/chromedrivers").
-                            joinpath(hash(time()).__str__()),
+        driver.generate_driver_instances(
+            profile_dir = Path(os.getenv("APPDATA")).
+                            joinpath("classroomAPI/chromedrivers"),
             driver_arguments = ["--headless=new"]
         )
     )

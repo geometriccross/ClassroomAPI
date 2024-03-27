@@ -1,24 +1,51 @@
-from typing import *
+from typing import List
+from collections.abc import Generator
 from pathlib import Path
-
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.chrome.options import Options
 
-def create_webdriver(driver_path: Path, driver_arguments: List[str]):
-    service = Service(driver_path
-        if driver_path.exists()
-        else driver_path.mkdir(parents=True, exist_ok=True)
-    )
+def webdriver_profile_generator(prefix: Path) -> Generator[Path, None, None]:
+    """
+    Chromeのプロファイルディレクトリを生成するジェネレーター関数
 
-    options = webdriver.ChromeOptions()
+    Args:
+        prefix (Path): ChromeDriverプロファイルのルートとするパス
+
+    Yields:
+        Path: 新しく作成されたプロファイルディレクトリのパス
+    """
+
+    profile_index = 0
+    while True:
+        profile_path = Path(prefix).joinpath(f"profile_{profile_index}")
+        yield Path(profile_path)
+        profile_index += 1
+
+def create_webdriver(profile_dir: Path, driver_arguments: List[str]) -> Generator[WebDriver, None, None]:
+    """
+    新しいChromeドライバーのインスタンスを作成する
+
+    Args:
+        profile_dir (Path): ChromeDriverプロファイルのルートディレクトリ
+        driver_arguments (List[str]): ChromeDriverに渡す引数のリスト
+
+    Yields:
+        WebDriver: 新しく作成されたChromeドライバーのインスタンス
+    """
     
-    #headlessなどのオプションを追加
-    for arg in driver_arguments:
-        options.add_argument(arg)
+    profile_generator = webdriver_profile_generator(profile_dir)
+    
+    while True:
+        profile_path = next(profile_generator)
+        profile_path.mkdir(exist_ok=True)
+    
+        service = Service()
+        options = Options()
+        options.add_argument(f"--user-data-dir={profile_path.absolute()}")
 
-    return webdriver.Chrome(service=service, options=options)
+        for arg in driver_arguments:
+            options.add_argument(arg)
+    
+        yield webdriver.Chrome(service=service, options=options)

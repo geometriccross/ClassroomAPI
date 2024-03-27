@@ -11,18 +11,17 @@ app = FastAPI()
 
 # グローバルなドライバーを作成
 drivers: list[webdriver.Chrome] = []
+instance_gen = driver.generate_driver_instances(
+    profile_dir = Path(os.getenv("APPDATA")).joinpath("classroomAPI/chromedrivers"),
+    driver_arguments = ["--headless"]
+)
 
 # アプリケーションの起動時にドライバーを作成
 @app.on_event("startup")
 async def startup_event():
     global drivers
-    drivers.append(
-        driver.generate_driver_instances(
-            profile_dir = Path(os.getenv("APPDATA")).
-                            joinpath("classroomAPI/chromedrivers"),
-            driver_arguments = ["--headless=new"]
-        )
-    )
+    global instance_gen
+    drivers.append(instance_gen.__next__())
 
 @app.get("/list")
 async def list():

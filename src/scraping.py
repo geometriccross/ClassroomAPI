@@ -8,6 +8,8 @@ from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.remote.webdriver import WebDriver
 
+import pyperclip
+
 def wait_for_element(driver: webdriver, by: By, value: str, timeout: int = 10) -> WebElement:
     try:
         return WebDriverWait(driver, timeout).until(EC.presence_of_element_located((by, value)))
@@ -93,20 +95,48 @@ def sections(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
         raise ValueError("Error: The number of keys and urls do not match.")
 
 def courses(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
-    elements = wait_for_element(
+    """
+    Google Classroomのコース名とURLを取得します。
+
+    :param driver: WebDriverのインスタンス
+    :param timeout: 要素を待つ最大時間
+    :return: コース名をキー、URLを値とする辞書
+    """
+    option_button_elements = wait_for_elements(
         driver=driver,
         by=By.XPATH,
-        value='//div[@class="t2wIBc"]',
+        value='//div[@jscontroller="bkcTxe"]',
         timeout=timeout
-    )
+    ) #最初の要素は「クラスへの連絡事項を入力」のため、スキップする
     
-    if elements is None:
-        raise ValueError("Error: Unable to locate elements.")
+    keys = [
+        elem.text for elem in wait_for_elements(
+            driver=driver,
+            by=By.XPATH,
+            value='//div[@jsmodel="PTCFbe"]',
+            timeout=timeout
+        )
+    ]
     
-    course_info = {}
-    for element in elements:
-        key = element.text
-        url = element.get_attribute("href")
-        course_info[key] = url
-    
-    return course_info
+    urls = []
+    for option_button in option_button_elements:
+        WebDriverWait(driver, timeout).until(EC.element_to_be_clickable(option_button))
+        option_button.click()
+
+        #リンクをコピーのボタンをクリック
+        copy_link_button = WebDriverWait(driver, timeout).until(
+            EC.element_to_be_clickable((By.XPATH, '//div[@class="JPdR6b hVNH5c qjTEB"]'))
+        )
+        copy_link_button.click()
+        # 'リンクをコピー'ボタンが消失するまで待機
+        WebDriverWait(driver, timeout).until(
+            EC.invisibility_of_element(copy_link_button)
+        )
+        
+        # クリップボードにURLがコピーされるのを待機
+        WebDriverWait(driver, timeout).until(lambda _: pyperclip.paste() != '')
+        urls.append(pyperclip.paste())
+
+
+    if len(keys) == len(urls):
+        return dict(zip(keys, urls))

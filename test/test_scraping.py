@@ -21,7 +21,7 @@ def test_driver() -> WebDriver:
     test_dir = Path("test/chrome_drivers")
     test_dir.mkdir(parents=True, exist_ok=True)
     
-    driver_generator = generate_driver_instances(test_dir, ["--headless"])
+    driver_generator = generate_driver_instances(test_dir, [])
     driver = next(driver_generator)
     yield driver
     
@@ -45,3 +45,20 @@ def test_sections(test_driver):
     
     # セクション（クラス）が少なくとも1つ以上存在することを確認
     assert len(sections) > 0, "セクションが存在しません。"
+    for section_name, section_url in sections.items():
+        assert section_name is not None
+        assert section_url is not None
+
+def test_courses(test_driver):
+    test_login_to_google_classroom(test_driver)
+    sections = scraping.sections(test_driver, 10)
+    
+    #sectionから最初の要素を取得
+    section = list(sections.keys())[0]
+    test_driver.get(sections[section])
+    
+    courses = scraping.courses(test_driver, 10)
+    assert len(courses) > 0, "コースが存在しません。"
+    for course_name, course_url in courses.items():
+        assert course_name is not None
+        assert course_url is not None

@@ -45,7 +45,8 @@ def generate_driver_instances(profile_dir: Path, driver_arguments: List[str]) ->
         options = Options()
         options.add_argument(f"--user-data-dir={profile_path.absolute()}")
 
-        for arg in driver_arguments:
-            options.add_argument(arg)
+        if len(driver_arguments) > 0:
+            for arg in driver_arguments:
+                options.add_argument(arg)
     
         yield webdriver.Chrome(service=service, options=options)

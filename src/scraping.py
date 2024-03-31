@@ -140,3 +140,23 @@ def courses(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
 
     if len(keys) == len(urls):
         return dict(zip(keys, urls))
+
+def files(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
+    elements = wait_for_elements(
+        driver=driver,
+        by=By.XPATH,
+        value='//div[@class="t2wIBc"]',
+        timeout=timeout
+    )
+    
+    keys, urls = [], []
+    for element in elements:
+        keys.append(element.text)
+        urls.append(
+            element.find_element(By.TAG_NAME, "a").get_attribute("href")
+        )
+    
+    if len(keys) == len(urls):
+        return dict(zip(keys, urls))
+    else:
+        raise ValueError("Error: The number of keys and urls do not match.")

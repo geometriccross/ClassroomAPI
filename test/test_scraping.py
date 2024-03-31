@@ -5,6 +5,8 @@ import pytest
 from dotenv import load_dotenv
 
 from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from src.driver import generate_driver_instances
 from src import scraping
@@ -15,6 +17,9 @@ load_dotenv(".env")
 USER_NAME = os.getenv("COLLAGE_USERNAME")
 USER_EMAIL = os.getenv("COLLAGE_EMAIL")
 PASSWORD = os.getenv("COLLAGE_PASSWORD")
+
+COURSES_TEST_URL = os.getenv("COURSES_TEST_URL")
+FILES_TEST_URL = os.getenv("FILES_TEST_URL")
 
 @pytest.fixture
 def test_driver() -> WebDriver:
@@ -50,15 +55,21 @@ def test_sections(test_driver):
         assert section_url is not None
 
 def test_courses(test_driver):
-    test_login_to_google_classroom(test_driver)
-    sections = scraping.sections(test_driver, 10)
-    
-    #sectionから最初の要素を取得
-    section = list(sections.keys())[0]
-    test_driver.get(sections[section])
+    test_driver.get(COURSES_TEST_URL)
+    scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
     
     courses = scraping.courses(test_driver, 10)
     assert len(courses) > 0, "コースが存在しません。"
     for course_name, course_url in courses.items():
         assert course_name is not None
         assert course_url is not None
+
+def test_files(test_driver):
+    test_driver.get(FILES_TEST_URL)
+    scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
+
+    files = scraping.files(test_driver, 10)
+    assert len(files) > 0, "ファイルが存在しません。"
+    for file_name, file_url in files.items():
+        assert file_name is not None
+        assert file_url is not None

@@ -25,7 +25,11 @@ async def startup_event():
 
 @app.get("/list")
 async def list():
-    return {"working webdriver": drivers.__str__()}
+@app.get("/add_driver", status_code=status.HTTP_201_CREATED)
+async def add_driver():
+    global drivers
+    drivers.append(instance_gen.__next__())
+    return {"message": "new driver is added"}
 
 # アプリケーションの終了時にドライバーを終了
 @app.on_event("shutdown")

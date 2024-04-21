@@ -9,7 +9,8 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-				"ms-python.debugpy"
+				"ms-python.debugpy",
+				"littlefoxteam.vscode-python-test-adapter"
 			]
 		}
 	},

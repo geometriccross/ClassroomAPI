@@ -6,3 +6,4 @@ venv
 sandbox
 .env
 temp.py
+.pytest_cache

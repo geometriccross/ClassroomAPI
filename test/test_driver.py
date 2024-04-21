@@ -25,7 +25,7 @@ def test_webdriver_profile_generator():
 
 def test_create_webdriver(setup_teardown):
     # テストケース1: 実際にドライバのインスタンスを作成できることを確認する
-    driver_generator = generate_driver_instances(Path("test/chrome_drivers"), ["--headless"])
+    driver_generator = generate_driver_instances(Path("test/chrome_drivers"), ["--headless", "--no-sandbox"])
     driver = next(driver_generator)
     assert isinstance(driver, WebDriver)
     driver.quit()

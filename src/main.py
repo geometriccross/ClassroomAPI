@@ -5,7 +5,7 @@ from fastapi import FastAPI, HTTPException, status
 from selenium import webdriver
 from shutil import rmtree
 
-from src import driver
+from src import driver, scraping
 
 app = FastAPI()
 
@@ -13,7 +13,7 @@ app = FastAPI()
 drivers: list[webdriver.Chrome] = []
 instance_gen = driver.generate_driver_instances(
     profile_dir = Path(os.getenv("APPDATA")).joinpath("classroomAPI/chromedrivers"),
-    driver_arguments = ["--headless"]
+    driver_arguments = ["--headless=new"]
 )
 
 # アプリケーションの起動時にドライバーを作成
@@ -23,8 +23,30 @@ async def startup_event():
     global instance_gen
     drivers.append(instance_gen.__next__())
 
+@app.get("/")
+async def read_root():
+    return {"Hello": "World"}
+
+@app.get("/get_sections")
+async def get_sections():
+    global drivers
+    
+    data = {}
+    try:
+        for driver in drivers:
+            data.update(scraping.sections(driver, 10))
+
+        return data
+    except TimeoutError:
+        raise HTTPException(status_code=500, detail="TimeoutError")
+
 @app.get("/list")
 async def list():
+    return {
+        "working webdriver": 
+            [driver.session_id for driver in drivers]
+        }
+
 @app.get("/add_driver", status_code=status.HTTP_201_CREATED)
 async def add_driver():
     global drivers

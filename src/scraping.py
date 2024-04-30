@@ -68,7 +68,7 @@ def sections(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
     :param timeout: 要素を待つ最大時間
     :return: セクション名をキー、URLを値とする辞書
     """
-    driver.get("https://classroom.google.com/u/0/h")
+    driver.get("https://classroom.google.com")
     key_elements = wait_for_elements(
         driver=driver, 
         by=By.XPATH, 

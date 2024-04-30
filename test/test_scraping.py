@@ -27,7 +27,7 @@ def test_driver() -> Generator[Any, Any, WebDriver]:
     test_dir = Path("test/chrome_drivers")
     test_dir.mkdir(parents=True, exist_ok=True)
     
-    driver_generator = generate_driver_instances(test_dir, [])
+    driver_generator = generate_driver_instances(test_dir, ["--headless=new"])
     driver = next(driver_generator)
     yield driver
     

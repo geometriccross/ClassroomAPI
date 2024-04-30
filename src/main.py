@@ -1,41 +1,43 @@
 import os
 from pathlib import Path
-from time import time
 from fastapi import FastAPI, HTTPException, status
-from selenium import webdriver
+from selenium.webdriver.remote.webdriver import WebDriver
 from shutil import rmtree
+from contextlib import asynccontextmanager
 
 from src import driver, scraping
 
-app = FastAPI()
-
 # グローバルなドライバーを作成
-drivers: list[webdriver.Chrome] = []
+drivers: list[WebDriver] = []
 instance_gen = driver.generate_driver_instances(
     profile_dir = Path(os.getenv("APPDATA")).joinpath("classroomAPI/chromedrivers"),
     driver_arguments = ["--headless=new"]
 )
 
-# アプリケーションの起動時にドライバーを作成
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global drivers
     global instance_gen
-    drivers.append(instance_gen.__next__())
+    # アプリケーションの起動時にドライバーを作成
+    drivers.append(next(instance_gen))
+
+    yield
+
+    for driver in drivers:
+        driver.quit()
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
 
-@app.get("/get_sections")
+@app.get("/sections")
 async def get_sections():
     global drivers
-    
     data = {}
     try:
-        for driver in drivers:
-            data.update(scraping.sections(driver, 10))
-
+        data.update(scraping.sections(drivers[0], 10))
         return data
     except TimeoutError:
         raise HTTPException(status_code=500, detail="TimeoutError")
@@ -74,10 +76,3 @@ async def clear_driver():
         drivers.clear()
     else:
         raise HTTPException(status_code=404, detail="No driver to clear")
-
-# アプリケーションの終了時にドライバーを終了
-@app.on_event("shutdown")
-async def shutdown_event():
-    global drivers
-    for driver in drivers:
-        driver.quit()

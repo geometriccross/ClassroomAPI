@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from src.driver import generate_driver_instances
 from src import scraping
+from typing import Generator, Any
 
 load_dotenv(".env")
 
@@ -22,7 +23,7 @@ COURSES_TEST_URL = os.getenv("COURSES_TEST_URL")
 FILES_TEST_URL = os.getenv("FILES_TEST_URL")
 
 @pytest.fixture
-def test_driver() -> WebDriver:
+def test_driver() -> Generator[Any, Any, WebDriver]:
     test_dir = Path("test/chrome_drivers")
     test_dir.mkdir(parents=True, exist_ok=True)
     
@@ -33,17 +34,19 @@ def test_driver() -> WebDriver:
     driver.quit()
     shutil.rmtree(test_dir)
 
-def test_login_to_google_classroom(test_driver):
+def test_login_to_google_classroom(test_driver: WebDriver):
     test_driver.get("https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fclassroom.google.com&ifkv=ARZ0qKK0GsFwI5PXniQdLUuY_N4_bgWD6xGS9M02CmscmVL7nKgDlaGJRNeJV-QAmwwvP1r-fQ2muA&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S319460678%3A1711092114297087&theme=mn&ddm=0")
     scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
     assert test_driver is not None
+    
+    assert "https://classroom.google.com" in test_driver.current_url
 
-def test_sections(test_driver):
+def test_sections(test_driver: WebDriver):
     # Google Classroomにログインしていることを前提とする
     test_login_to_google_classroom(test_driver)
     
     # Google Classroomのセクション（クラス）一覧ページに移動
-    test_driver.get("https://classroom.google.com/u/0/h")
+    test_driver.get("https://classroom.google.com")
     
     # セクション（クラス）の要素を取得
     sections = scraping.sections(test_driver, 10)
@@ -54,7 +57,7 @@ def test_sections(test_driver):
         assert section_name is not None
         assert section_url is not None
 
-def test_courses(test_driver):
+def test_courses(test_driver: WebDriver):
     test_driver.get(COURSES_TEST_URL)
     scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
     
@@ -64,7 +67,7 @@ def test_courses(test_driver):
         assert course_name is not None
         assert course_url is not None
 
-def test_files(test_driver):
+def test_files(test_driver: WebDriver):
     test_driver.get(FILES_TEST_URL)
     scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
 

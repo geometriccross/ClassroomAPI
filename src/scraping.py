@@ -171,14 +171,6 @@ class WhereIsDriver(Enum):
     PRE_COURSE = 2
     PRE_FILE = 3
 
-    # 関数の引数をそろえるため高階関数にしている
-    should_do: list[callable] = [
-        lambda driver: lambda adrs, name, pswd: login_to_google_classroom(driver, adrs, name, pswd),
-        lambda driver: driver.get("https://classroom.google.com"),
-        courses,
-        files
-    ]
-
     def of(driver: WebDriver) -> "WhereIsDriver":
         """
         渡されたdriverのurlを判断し、状態を返します。
@@ -195,11 +187,7 @@ class WhereIsDriver(Enum):
         PRE_LOGGED_INが渡された場合、adrs, name, pswdを引数に取る関数を返します。
         その他は何も返しません。
         """
-        if where_is_driver is WhereIsDriver.PRE_LOGGED_IN:
-            return lambda adrs, name, pswd: login_to_google_classroom(driver, adrs, name, pswd)
-        elif where_is_driver is WhereIsDriver.PRE_SECTION:
-            return lambda: driver.get("https://classroom.google.com")
-        elif where_is_driver is WhereIsDriver.PRE_COURSE:
-            return courses(driver)
-        elif where_is_driver is WhereIsDriver.PRE_FILE:
-            return files(driver)
+        if where_is_driver is WhereIsDriver.PRE_LOGGED_IN: return lambda adrs, name, pswd: login_to_google_classroom(driver, adrs, name, pswd)
+        elif where_is_driver is WhereIsDriver.PRE_SECTION: return lambda: driver.get("https://classroom.google.com")
+        elif where_is_driver is WhereIsDriver.PRE_COURSE: return courses(driver)
+        elif where_is_driver is WhereIsDriver.PRE_FILE: return files(driver)

@@ -1,4 +1,6 @@
 from typing import List, Dict
+from enum import Enum
+from re import search
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -26,8 +28,7 @@ def wait_for_elements(driver: webdriver, by: By, value: str, timeout: int = 10) 
 
 def login_to_google_classroom(driver: webdriver, user_email: str, user_name: str, password: str) -> WebDriver:
     """
-    Google Takeoutにアクセスしてログインします。
-    Googleアカウントのユーザー名とパスワードを使用して、Google Takeoutにログインします。
+    Googleアカウントのユーザー名とパスワードを使用して、Google Classroomにログインします。
     """
     
     if email_input := wait_for_element(driver, By.XPATH, "//input[@type='email']"):
@@ -60,7 +61,7 @@ def login_collage(driver: webdriver, username: str, password: str) -> WebDriver:
     
     return driver
 
-def sections(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
+def sections(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     """
     Google Classroomのセクション名とURLを取得します。
     
@@ -94,7 +95,7 @@ def sections(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
     else:
         raise ValueError("Error: The number of keys and urls do not match.")
 
-def courses(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
+def courses(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     """
     Google Classroomのコース名とURLを取得します。
 
@@ -141,7 +142,7 @@ def courses(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
     if len(keys) == len(urls):
         return dict(zip(keys, urls))
 
-def files(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
+def files(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     elements = wait_for_elements(
         driver=driver,
         by=By.XPATH,
@@ -160,3 +161,45 @@ def files(driver: webdriver.Chrome, timeout: float) -> Dict[str, str]:
         return dict(zip(keys, urls))
     else:
         raise ValueError("Error: The number of keys and urls do not match.")
+
+class WhereIsDriver(Enum):
+    """
+    WebDriverの状態を表す列挙型
+    """
+    PRE_LOGGED_IN = 0
+    PRE_SECTION = 1
+    PRE_COURSE = 2
+    PRE_FILE = 3
+
+    # 関数の引数をそろえるため高階関数にしている
+    should_do: list[callable] = [
+        lambda driver: lambda adrs, name, pswd: login_to_google_classroom(driver, adrs, name, pswd),
+        lambda driver: driver.get("https://classroom.google.com"),
+        courses,
+        files
+    ]
+
+    def of(driver: WebDriver) -> "WhereIsDriver":
+        """
+        渡されたdriverのurlを判断し、状態を返します。
+        """
+
+        if "accounts.google.com" in driver.current_url: return WhereIsDriver.PRE_LOGGED_IN
+        elif search("/.../$|/$", driver.current_url): return WhereIsDriver.PRE_SECTION
+        elif search("/.{16}$", driver.current_url): return WhereIsDriver.PRE_COURSE
+        elif search("/.{16}/details$") in driver.current_url: return WhereIsDriver.PRE_FILE
+    
+    def do(driver: WebDriver, where_is_driver: "WhereIsDriver") -> None | callable:
+        """
+        状態に応じた関数を実行します。
+        PRE_LOGGED_INが渡された場合、adrs, name, pswdを引数に取る関数を返します。
+        その他は何も返しません。
+        """
+        if where_is_driver is WhereIsDriver.PRE_LOGGED_IN:
+            return lambda adrs, name, pswd: login_to_google_classroom(driver, adrs, name, pswd)
+        elif where_is_driver is WhereIsDriver.PRE_SECTION:
+            return lambda: driver.get("https://classroom.google.com")
+        elif where_is_driver is WhereIsDriver.PRE_COURSE:
+            return courses(driver)
+        elif where_is_driver is WhereIsDriver.PRE_FILE:
+            return files(driver)

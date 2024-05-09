@@ -5,12 +5,12 @@ from selenium.webdriver.remote.webdriver import WebDriver
 from shutil import rmtree
 from contextlib import asynccontextmanager
 
-from src import driver, scraping
-from src.scraping import WhereIsDriver
+from src.services.driver import generate_driver_instances
+from src.services.scraping import *
 
 # グローバルなドライバーを作成
 drivers: list[WebDriver] = []
-instance_gen = driver.generate_driver_instances(
+instance_gen = generate_driver_instances(
     profile_dir = Path(os.getenv("APPDATA")).joinpath("classroomAPI/chromedrivers"),
     driver_arguments = ["--headless=new"]
 )
@@ -38,8 +38,7 @@ async def get_sections():
     global drivers
     data = {}
     try:
-
-        data.update(scraping.sections(drivers[0], 10))
+        data.update(sections(drivers[0], 10))
         return data
     except TimeoutError:
         raise HTTPException(status_code=500, detail="TimeoutError")

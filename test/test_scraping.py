@@ -44,7 +44,7 @@ def test_login_to_google_classroom(test_driver: WebDriver):
     scraping.login_to_google_classroom(test_driver, credentials)
     assert test_driver is not None
     
-    assert SECTION_TEST_URL in test_driver.current_url
+    assert test_driver.current_url in SECTION_TEST_URL
 
 def test_sections(test_driver: WebDriver):
     # Google Classroomにログインしていることを前提とする
@@ -83,11 +83,9 @@ def test_files(test_driver: WebDriver):
         assert file_url is not None
 
 def test_where_is_driver_of(mocker: pytest_mock.MockFixture):    
-    mock_driver = mocker.Mock()
-
-    scraping.WhereIsDriver.of(SECTION_TEST_URL) is scraping.WhereIsDriver.PRE_SECTION
-    scraping.WhereIsDriver.of(COURSES_TEST_URL) is scraping.WhereIsDriver.PRE_COURSE
-    scraping.WhereIsDriver.of(FILES_TEST_URL) is scraping.WhereIsDriver.PRE_FILE
+    scraping.WhereIsDriver.of(SECTION_TEST_URL) is scraping.DriverState.PRE_SECTION
+    scraping.WhereIsDriver.of(COURSES_TEST_URL) is scraping.DriverState.PRE_COURSE
+    scraping.WhereIsDriver.of(FILES_TEST_URL) is scraping.DriverState.PRE_FILE
 
 def test_where_is_driver_check(mocker: pytest_mock.MockFixture):
     mock_driver = mocker.Mock()

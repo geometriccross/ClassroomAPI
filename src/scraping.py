@@ -1,4 +1,5 @@
-from typing import List, Dict
+from __future__ import annotations
+from typing import List, Dict, Callable
 from enum import Enum
 from re import search
 
@@ -169,32 +170,36 @@ def files(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     else:
         raise ValueError("Error: The number of keys and urls do not match.")
 
-class WhereIsDriver(Enum):
+class DriverState(Enum):
     """
     WebDriverの状態を表す列挙型
     """
-    PRE_LOGGED_IN = 0
-    PRE_SECTION = 1
-    PRE_COURSE = 2
-    PRE_FILE = 3
+    PRE_SECTION = 0
+    PRE_COURSE = 1
+    PRE_FILE = 2
 
-    def of(driver: WebDriver) -> "WhereIsDriver":
+class WhereIsDriver:
+    def __init__(self, driver: WebDriver) -> None:
+        self.__driver = driver
+        super().__init__()
+    
+    def of(url: str) -> DriverState:
         """
         渡されたdriverのurlを判断し、状態を返します。
         """
 
-        if "accounts.google.com" in driver.current_url: return WhereIsDriver.PRE_LOGGED_IN
-        elif search("/.../$|/$", driver.current_url): return WhereIsDriver.PRE_SECTION
-        elif search("/.{16}$", driver.current_url): return WhereIsDriver.PRE_COURSE
-        elif search("/.{16}/details$") in driver.current_url: return WhereIsDriver.PRE_FILE
+        if search("/.../$|/$", url): return DriverState.PRE_SECTION
+        elif search("/.{16}$", url): return DriverState.PRE_COURSE
+        elif search("/.{16}/details$", url): return DriverState.PRE_FILE
+
+    def is_correct(self, function: Callable[[WebDriver], Dict[str, str]]) -> bool:
+        current_state = WhereIsDriver.of(self.__driver.current_url)
     
-    def do(driver: WebDriver, where_is_driver: "WhereIsDriver") -> None | callable:
-        """
-        状態に応じた関数を実行します。
-        PRE_LOGGED_INが渡された場合、adrs, name, pswdを引数に取る関数を返します。
-        その他は何も返しません。
-        """
-        if where_is_driver is WhereIsDriver.PRE_LOGGED_IN: return lambda adrs, name, pswd: login_to_google_classroom(driver, adrs, name, pswd)
-        elif where_is_driver is WhereIsDriver.PRE_SECTION: return lambda: driver.get("https://classroom.google.com")
-        elif where_is_driver is WhereIsDriver.PRE_COURSE: return courses(driver)
-        elif where_is_driver is WhereIsDriver.PRE_FILE: return files(driver)
+        return \
+            current_state is DriverState.PRE_SECTION and function is sections or \
+            current_state is DriverState.PRE_COURSE and function is courses or \
+            current_state is DriverState.PRE_FILE and function is files
+    
+    def try_execute(self, function: Callable[[WebDriver], Dict[str, str]]) -> Dict[str, str] | None:
+        if self.is_correct(function):
+            return function(self.__driver)

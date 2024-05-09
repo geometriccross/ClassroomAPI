@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import shutil
 import pytest
+import pytest_mock
 from dotenv import load_dotenv
 
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -22,7 +23,7 @@ credentials = scraping.Credentials(
 )
 
 LOGIN_URL = os.getenv("LOGIN_URL")
-SECTION_TEST_URL = os.getenv("SECTION_URL")
+SECTION_TEST_URL = os.getenv("SECTION_TEST_URL")
 COURSES_TEST_URL = os.getenv("COURSES_TEST_URL")
 FILES_TEST_URL = os.getenv("FILES_TEST_URL")
 
@@ -81,3 +82,34 @@ def test_files(test_driver: WebDriver):
         assert file_name is not None
         assert file_url is not None
 
+def test_where_is_driver_of(mocker: pytest_mock.MockFixture):    
+    mock_driver = mocker.Mock()
+
+    scraping.WhereIsDriver.of(SECTION_TEST_URL) is scraping.WhereIsDriver.PRE_SECTION
+    scraping.WhereIsDriver.of(COURSES_TEST_URL) is scraping.WhereIsDriver.PRE_COURSE
+    scraping.WhereIsDriver.of(FILES_TEST_URL) is scraping.WhereIsDriver.PRE_FILE
+
+def test_where_is_driver_check(mocker: pytest_mock.MockFixture):
+    mock_driver = mocker.Mock()
+    class fixture:
+        def __init__(self, name: str, url: str, target_func: callable, except_result: any) -> None:
+            self.name = name
+            self.url = url
+            self.target_func = target_func
+            self.except_result = except_result
+    
+    fixtures = [
+        # 状態と呼び出す関数が一致する場合
+        fixture("section-section", SECTION_TEST_URL, scraping.sections, True),
+        fixture("course-course", COURSES_TEST_URL, scraping.courses, True),
+        fixture("file-file", FILES_TEST_URL, scraping.files, True),
+        # 一致しない場合
+        fixture("section-course", SECTION_TEST_URL, scraping.courses, False),
+        fixture("course-file", COURSES_TEST_URL, scraping.files, False),
+        fixture("file-section", FILES_TEST_URL, scraping.sections, False)
+    ]
+    
+    for fix in fixtures:
+        mock_driver.current_url = fix.url
+        where_is_driver = scraping.WhereIsDriver(mock_driver)
+        assert where_is_driver.is_correct(fix.target_func) is fix.except_result

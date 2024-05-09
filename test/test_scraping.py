@@ -22,7 +22,7 @@ credentials = scraping.Credentials(
 )
 
 LOGIN_URL = os.getenv("LOGIN_URL")
-SECTION_URL = os.getenv("SECTION_URL")
+SECTION_TEST_URL = os.getenv("SECTION_URL")
 COURSES_TEST_URL = os.getenv("COURSES_TEST_URL")
 FILES_TEST_URL = os.getenv("FILES_TEST_URL")
 
@@ -43,14 +43,14 @@ def test_login_to_google_classroom(test_driver: WebDriver):
     scraping.login_to_google_classroom(test_driver, credentials)
     assert test_driver is not None
     
-    assert SECTION_URL in test_driver.current_url
+    assert SECTION_TEST_URL in test_driver.current_url
 
 def test_sections(test_driver: WebDriver):
     # Google Classroomにログインしていることを前提とする
     test_login_to_google_classroom(test_driver)
     
     # Google Classroomのセクション（クラス）一覧ページに移動
-    test_driver.get(SECTION_URL)
+    test_driver.get(SECTION_TEST_URL)
     
     # セクション（クラス）の要素を取得
     sections = scraping.sections(test_driver, 10)

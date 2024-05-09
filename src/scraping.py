@@ -27,7 +27,7 @@ def wait_for_elements(driver: webdriver, by: By, value: str, timeout: int = 10) 
         print(f"Error: Timeout waiting for element by {by} with value {value}")
         return None
 
-    # googleアカウントにログインするための情報を扱うための型
+# googleアカウントにログインするための情報を扱うための型
 class Credentials:
     def __init__(self, email: str, name: str, password: str) -> None:
         self.email = email

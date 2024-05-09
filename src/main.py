@@ -6,6 +6,7 @@ from shutil import rmtree
 from contextlib import asynccontextmanager
 
 from src import driver, scraping
+from src.scraping import WhereIsDriver
 
 # グローバルなドライバーを作成
 drivers: list[WebDriver] = []
@@ -37,6 +38,7 @@ async def get_sections():
     global drivers
     data = {}
     try:
+
         data.update(scraping.sections(drivers[0], 10))
         return data
     except TimeoutError:

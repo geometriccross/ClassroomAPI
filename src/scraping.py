@@ -26,23 +26,30 @@ def wait_for_elements(driver: webdriver, by: By, value: str, timeout: int = 10) 
         print(f"Error: Timeout waiting for element by {by} with value {value}")
         return None
 
-def login_to_google_classroom(driver: webdriver, user_email: str, user_name: str, password: str) -> WebDriver:
+    # googleアカウントにログインするための情報を扱うための型
+class Credentials:
+    def __init__(self, email: str, name: str, password: str) -> None:
+        self.email = email
+        self.name = name
+        self.password = password
+
+def login_to_google_classroom(driver: webdriver, cred: Credentials) -> WebDriver:
     """
     Googleアカウントのユーザー名とパスワードを使用して、Google Classroomにログインします。
     """
     
     if email_input := wait_for_element(driver, By.XPATH, "//input[@type='email']"):
-        email_input.send_keys(user_email)
+        email_input.send_keys(cred.email)
         wait_for_element(driver, By.ID, "identifierNext").click()
     
     if WebDriverWait(driver, 10).until(EC.url_contains("shibboleth")):
-        login_collage(driver, user_name, password)
+        login_collage(driver, cred.name, cred.password)
 
     if next_button := wait_for_element(driver, By.XPATH, "//div[@jsname='Njthtb']"):
             next_button.click()
 
     if password_input := wait_for_element(driver, By.CSS_SELECTOR, "#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input"):
-        password_input.send_keys(password)
+        password_input.send_keys(cred.password)
         wait_for_element(driver, By.ID, "passwordNext").click()
 
     return driver
@@ -69,7 +76,7 @@ def sections(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     :param timeout: 要素を待つ最大時間
     :return: セクション名をキー、URLを値とする辞書
     """
-    driver.get("https://classroom.google.com")
+    
     key_elements = wait_for_elements(
         driver=driver, 
         by=By.XPATH, 

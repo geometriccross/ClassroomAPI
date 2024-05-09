@@ -15,10 +15,14 @@ from typing import Generator, Any
 load_dotenv(".env")
 
 # 環境変数からログイン情報を取得
-USER_NAME = os.getenv("COLLAGE_USERNAME")
-USER_EMAIL = os.getenv("COLLAGE_EMAIL")
-PASSWORD = os.getenv("COLLAGE_PASSWORD")
+credentials = scraping.Credentials( 
+    os.getenv("COLLAGE_EMAIL"),
+    os.getenv("COLLAGE_USERNAME"),
+    os.getenv("COLLAGE_PASSWORD")
+)
 
+LOGIN_URL = os.getenv("LOGIN_URL")
+SECTION_URL = os.getenv("SECTION_URL")
 COURSES_TEST_URL = os.getenv("COURSES_TEST_URL")
 FILES_TEST_URL = os.getenv("FILES_TEST_URL")
 
@@ -35,18 +39,18 @@ def test_driver() -> Generator[Any, Any, WebDriver]:
     shutil.rmtree(test_dir)
 
 def test_login_to_google_classroom(test_driver: WebDriver):
-    test_driver.get("https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fclassroom.google.com&ifkv=ARZ0qKK0GsFwI5PXniQdLUuY_N4_bgWD6xGS9M02CmscmVL7nKgDlaGJRNeJV-QAmwwvP1r-fQ2muA&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S319460678%3A1711092114297087&theme=mn&ddm=0")
-    scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
+    test_driver.get(LOGIN_URL)
+    scraping.login_to_google_classroom(test_driver, credentials)
     assert test_driver is not None
     
-    assert "https://classroom.google.com" in test_driver.current_url
+    assert SECTION_URL in test_driver.current_url
 
 def test_sections(test_driver: WebDriver):
     # Google Classroomにログインしていることを前提とする
     test_login_to_google_classroom(test_driver)
     
     # Google Classroomのセクション（クラス）一覧ページに移動
-    test_driver.get("https://classroom.google.com")
+    test_driver.get(SECTION_URL)
     
     # セクション（クラス）の要素を取得
     sections = scraping.sections(test_driver, 10)
@@ -59,7 +63,7 @@ def test_sections(test_driver: WebDriver):
 
 def test_courses(test_driver: WebDriver):
     test_driver.get(COURSES_TEST_URL)
-    scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
+    scraping.login_to_google_classroom(test_driver, credentials)
     
     courses = scraping.courses(test_driver, 10)
     assert len(courses) > 0, "コースが存在しません。"
@@ -69,10 +73,11 @@ def test_courses(test_driver: WebDriver):
 
 def test_files(test_driver: WebDriver):
     test_driver.get(FILES_TEST_URL)
-    scraping.login_to_google_classroom(test_driver, USER_EMAIL, USER_NAME, PASSWORD)
+    scraping.login_to_google_classroom(test_driver, credentials)
 
     files = scraping.files(test_driver, 10)
     assert len(files) > 0, "ファイルが存在しません。"
     for file_name, file_url in files.items():
         assert file_name is not None
         assert file_url is not None
+

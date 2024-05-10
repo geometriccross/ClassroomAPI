@@ -1,14 +1,17 @@
 import pytest
+from pytest_mock import MockerFixture
 import shutil
 from pathlib import Path
 from selenium.webdriver.chrome.webdriver import WebDriver
 
-from src.driver import *
+from src.services import driver
+
+TEST_DIR = Path("test/chrome_drivers")
 
 @pytest.fixture(scope="module")
 def setup_teardown():
     # テストの前処理
-    test_dir = Path("test/chrome_drivers")
+    test_dir = TEST_DIR
     test_dir.mkdir(parents=True, exist_ok=True)
 
     yield
@@ -17,24 +20,33 @@ def setup_teardown():
     shutil.rmtree(test_dir)
 
 def test_webdriver_profile_generator():
-    profile_generator = webdriver_profile_generator("")
-    profile = next(profile_generator)
-    assert profile == Path("profile_0")
-    profile = next(profile_generator)
-    assert profile == Path("profile_1")
+    profile_generator = driver.webdriver_profile_generator("")
+    assert next(profile_generator) == Path("profile_0")
+    assert next(profile_generator) == Path("profile_1")
+    
+    profile_generator = driver.webdriver_profile_generator("", 5)
+    assert next(profile_generator) == Path("profile_5")
 
-def test_create_webdriver(setup_teardown):
-    # テストケース1: 実際にドライバのインスタンスを作成できることを確認する
-    driver_generator = generate_driver_instances(Path("test/chrome_drivers"), ["--headless=new", "--no-sandbox"])
-    driver = next(driver_generator)
-    assert isinstance(driver, WebDriver)
-    driver.quit()
-
-    # テストケース2: 複数回ジェネレータがnextで呼ばれた際に新しいインスタンスを作成できることを確認する
-    driver1 = next(driver_generator)
-    driver2 = next(driver_generator)
-    assert isinstance(driver1, WebDriver)
-    assert isinstance(driver2, WebDriver)
-    assert driver1.session_id != driver2.session_id
-    driver1.quit()
-    driver2.quit()
+def test_stored_drivers_shrink(setup_teardown, mocker: MockerFixture):
+    drivers = driver.StoredDrivers(profile_dir=TEST_DIR, driver_arguments=["--headless=new"])
+    assert len(drivers) == 1
+    
+    drivers.shrink()
+    assert len(drivers) == 0
+    
+    #異常を起こさないか確認
+    drivers.shrink()
+    
+    ins_index = 3
+    for _ in range(ins_index):
+        drivers.grow()
+    
+    assert len(drivers) == ins_index
+    drivers.shrink()
+    ins_index -= 1
+    
+    assert TEST_DIR.joinpath(f"profile_{ins_index-1}").exists()
+    drivers.grow()
+    ins_index += 1
+    
+    assert TEST_DIR.joinpath(f"profile_{ins_index-1}").exists()

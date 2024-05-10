@@ -21,10 +21,11 @@ def drivers():
         driver_arguments=["--headless=new"]
     )
     
-    yield drivers
-    
-    drivers.clear()
-    shutil.rmtree(TEST_DIR)
+    try:
+        yield drivers
+    finally:
+        drivers.clear()
+        shutil.rmtree(TEST_DIR)
 
 def test_webdriver_profile_generator():
     profile_generator = driver.webdriver_profile_generator("")

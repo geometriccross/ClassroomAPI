@@ -1,4 +1,4 @@
-from threading import Thread
+from __future__ import annotations
 from typing import List
 from shutil import rmtree
 from collections.abc import Generator
@@ -55,9 +55,9 @@ def generate_driver_instances(profile_gen: Generator[Path, None, None], driver_a
         yield webdriver.Chrome(service=service, options=options)
 
 class StoredDrivers(List):
-    def __init_subclass__(cls) -> None:
-        return super().__init_subclass__()
-    
+    """
+    Chromeドライバーのインスタンスを保存するシングルトンクラス
+    """    
     def __init__(self, profile_dir: Path, driver_arguments: List[str]) -> None:
         super().__init__()
         self.__profile_dir = profile_dir
@@ -71,10 +71,11 @@ class StoredDrivers(List):
             self.__instance_gen.__next__()
         )
     
-    def __del__(self) -> None:
-        for _ in range(len(self)):
-            self.shrink()
-    
+    def __new__(cls, *args, **kwag) -> StoredDrivers:
+        if not hasattr(cls, "__instance") or cls.__instance is None:
+            cls.__instance = super().__new__(cls, *args, **kwag)
+        return cls.__instance
+
     def grow(self) -> None:
         """
         新しいdriverを、内部に保存されているgeneratorから追加する
@@ -97,3 +98,9 @@ class StoredDrivers(List):
                 webdriver_profile_generator(self.__profile_dir, len(self)),
                 self.__driver_arguments
             )
+    
+    def clear(self) -> None:
+        for driver in self:
+            driver.quit()
+            rmtree(driver.capabilities['chrome']['userDataDir'])
+        return super().clear()

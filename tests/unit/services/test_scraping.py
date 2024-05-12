@@ -9,8 +9,8 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from src.driver import generate_driver_instances
-from src import scraping
+from src.services.driver import generate_driver_instances
+from src.services import scraping
 from typing import Generator, Any
 
 load_dotenv(".env")

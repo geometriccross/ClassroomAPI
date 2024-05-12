@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from src.services.driver import generate_driver_instances
+from src.services.driver import generate_driver_instances, webdriver_profile_generator
 from src.services import scraping
 from typing import Generator, Any
 
@@ -32,7 +32,10 @@ def test_driver() -> Generator[Any, Any, WebDriver]:
     test_dir = Path("test/chrome_drivers")
     test_dir.mkdir(parents=True, exist_ok=True)
     
-    driver_generator = generate_driver_instances(test_dir, ["--headless=new"])
+    driver_generator = generate_driver_instances(
+        profile_gen=webdriver_profile_generator(test_dir),
+        driver_arguments=["--headless=new"]
+    )
     driver = next(driver_generator)
     yield driver
     

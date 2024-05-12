@@ -1,8 +1,6 @@
 import pytest
-from pytest_mock import MockerFixture
 import shutil
 from pathlib import Path
-from selenium.webdriver.chrome.webdriver import WebDriver
 
 from src.services import driver
 

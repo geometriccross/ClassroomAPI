@@ -1,24 +1,25 @@
-import os
+from os import getenv
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, status
-from selenium.webdriver.remote.webdriver import WebDriver
-
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from logging import Logger, getLogger
 
-from src.routers.driver import driver_router
-from src.routers.scraping import scraping_router
+import dependencies as dep
+from services.driver import StoredDrivers
+from routers.driver import driver_router
+from routers.scraping import scraping_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global drivers
-    global instance_gen
-    # アプリケーションの起動時にドライバーを作成
-    drivers.append(next(instance_gen))
+    __stored_drivers = StoredDrivers(
+        profile_dir = Path(getenv("APPDATA")).joinpath("classroomAPI/chromedrivers"),
+        driver_arguments = ["--headless=new"]
+    )
 
-    yield
-
-    for driver in drivers:
-        driver.quit()
+    try:
+        yield
+    finally:
+        __stored_drivers.clear()
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(driver_router)
@@ -27,3 +28,7 @@ app.include_router(scraping_router)
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app)

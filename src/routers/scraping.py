@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from src.services.scraping import *
+from services.scraping import *
 
 scraping_router = APIRouter()
 

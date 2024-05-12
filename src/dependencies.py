@@ -1,5 +1,5 @@
 from logging import Logger, getLogger
-from src.services.driver import StoredDrivers
+from services.driver import StoredDrivers
 
 __stored_drivers: StoredDrivers
 

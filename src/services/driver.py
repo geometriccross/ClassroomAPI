@@ -1,15 +1,15 @@
 from __future__ import annotations
-from typing import List
+from typing import List, Generator
 from shutil import rmtree
-from collections.abc import Generator
 from pathlib import Path
+from threading import Thread
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.chrome.options import Options
 
-from typing import Generator
-from pathlib import Path
+from .scraping import Credentials, login_to_google_classroom
 
 def webdriver_profile_generator(prefix: Path, default_index: int = 0) -> Generator[Path, None, None]:
     """
@@ -28,13 +28,14 @@ def webdriver_profile_generator(prefix: Path, default_index: int = 0) -> Generat
         yield Path(profile_path)
         profile_index += 1
 
-def generate_driver_instances(profile_gen: Generator[Path, None, None], driver_arguments: List[str]) -> Generator[WebDriver, None, None]:
+def generate_driver_instances(profile_gen: Generator[Path, None, None], driver_arguments: List[str], cred: Credentials) -> Generator[WebDriver, None, None]:
     """
     新しいChromeドライバーのインスタンスを作成する
 
     Args:
         profile_dir (Path): ChromeDriverプロファイルのルートディレクトリ
         driver_arguments (List[str]): ChromeDriverに渡す引数のリスト
+        cred (Credentials): Google Classroomにログインするためのアカウント情報
 
     Yields:
         WebDriver: 新しく作成されたChromeドライバーのインスタンス
@@ -52,19 +53,23 @@ def generate_driver_instances(profile_gen: Generator[Path, None, None], driver_a
             for arg in driver_arguments:
                 options.add_argument(arg)
     
-        yield webdriver.Chrome(service=service, options=options)
+        driver = webdriver.Chrome(service=service, options=options)
+        login_to_google_classroom(driver, cred)
+        yield driver
 
 class StoredDrivers(List):
     """
     Chromeドライバーのインスタンスを保存するシングルトンクラス
     """    
-    def __init__(self, profile_dir: Path, driver_arguments: List[str]) -> None:
+    def __init__(self, profile_dir: Path, driver_arguments: List[str], cred: Credentials) -> None:
         super().__init__()
         self.__profile_dir = profile_dir
         self.__driver_arguments = driver_arguments
+        self.__cred = cred
         self.__instance_gen = generate_driver_instances(
             webdriver_profile_generator(self.__profile_dir),
-            driver_arguments = driver_arguments
+            driver_arguments = self.__driver_arguments,
+            cred=self.__cred
         )
         
         self.append(

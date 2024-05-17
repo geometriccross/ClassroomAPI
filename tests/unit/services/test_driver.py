@@ -1,29 +1,36 @@
+from os import makedirs, path, getenv
 import pytest
+from unittest.mock import patch
 import shutil
 from pathlib import Path
+from dotenv import load_dotenv
 
 from src.services import driver
+from src.services.scraping import Credentials
 
-TEST_DIR = Path("test/chrome_drivers")
+TEST_DIR = Path("tests/chrome_drivers")
+
+load_dotenv(".env")
 
 @pytest.fixture(scope="module")
 def drivers():
-    # テストの前処理
-    test_dir = TEST_DIR
-    if test_dir.exists():
-        shutil.rmtree(TEST_DIR)
-
-    test_dir.mkdir(parents=True, exist_ok=True)
+    makedirs(TEST_DIR, exist_ok=True)
     drivers = driver.StoredDrivers(
-        profile_dir=TEST_DIR, 
-        driver_arguments=["--headless=new"]
+        profile_dir=TEST_DIR,
+        driver_arguments=["--headless=new"],
+        cred=Credentials(
+            getenv("COLLAGE_EMAIL"),
+            getenv("COLLAGE_USERNAME"),
+            getenv("COLLAGE_PASSWORD")
+        )
     )
     
     try:
         yield drivers
     finally:
         drivers.clear()
-        shutil.rmtree(TEST_DIR)
+        if path.exists(TEST_DIR):
+            shutil.rmtree(TEST_DIR)
 
 def test_webdriver_profile_generator():
     profile_generator = driver.webdriver_profile_generator("")

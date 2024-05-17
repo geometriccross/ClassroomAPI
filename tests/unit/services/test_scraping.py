@@ -34,7 +34,8 @@ def test_driver() -> Generator[Any, Any, WebDriver]:
     
     driver_generator = generate_driver_instances(
         profile_gen=webdriver_profile_generator(test_dir),
-        driver_arguments=["--headless=new"]
+        driver_arguments=["--headless=new"],
+        cred=credentials
     )
     driver = next(driver_generator)
     yield driver
@@ -42,17 +43,7 @@ def test_driver() -> Generator[Any, Any, WebDriver]:
     driver.quit()
     shutil.rmtree(test_dir)
 
-def test_login_to_google_classroom(test_driver: WebDriver):
-    test_driver.get(LOGIN_URL)
-    scraping.login_to_google_classroom(test_driver, credentials)
-    assert test_driver is not None
-    
-    assert test_driver.current_url in SECTION_TEST_URL
-
-def test_sections(test_driver: WebDriver):
-    # Google Classroomにログインしていることを前提とする
-    test_login_to_google_classroom(test_driver)
-    
+def test_sections(test_driver: WebDriver):    
     # Google Classroomのセクション（クラス）一覧ページに移動
     test_driver.get(SECTION_TEST_URL)
     
@@ -67,7 +58,6 @@ def test_sections(test_driver: WebDriver):
 
 def test_courses(test_driver: WebDriver):
     test_driver.get(COURSES_TEST_URL)
-    scraping.login_to_google_classroom(test_driver, credentials)
     
     courses = scraping.courses(test_driver, 10)
     assert len(courses) > 0, "コースが存在しません。"
@@ -77,7 +67,6 @@ def test_courses(test_driver: WebDriver):
 
 def test_files(test_driver: WebDriver):
     test_driver.get(FILES_TEST_URL)
-    scraping.login_to_google_classroom(test_driver, credentials)
 
     files = scraping.files(test_driver, 10)
     assert len(files) > 0, "ファイルが存在しません。"

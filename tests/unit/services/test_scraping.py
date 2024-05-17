@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.services.driver import generate_driver_instances, webdriver_profile_generator
-from src.services import scraping
+from src.services.scraping import scraping
 from typing import Generator, Any
 
 load_dotenv(".env")

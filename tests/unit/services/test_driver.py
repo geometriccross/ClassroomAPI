@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.services import driver
-from src.services.scraping import Credentials
+from src.services.scraping.scraping import Credentials
 
 TEST_DIR = Path("tests/chrome_drivers")
 

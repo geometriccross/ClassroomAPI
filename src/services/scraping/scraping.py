@@ -39,6 +39,8 @@ def login_to_google_classroom(driver: webdriver, cred: Credentials) -> WebDriver
     Googleアカウントのユーザー名とパスワードを使用して、Google Classroomにログインします。
     """
     
+    driver.get("https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fclassroom.google.com&ifkv=ARZ0qKK0GsFwI5PXniQdLUuY_N4_bgWD6xGS9M02CmscmVL7nKgDlaGJRNeJV-QAmwwvP1r-fQ2muA&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S319460678%3A1711092114297087&theme=mn&ddm=0")
+    
     if email_input := wait_for_element(driver, By.XPATH, "//input[@type='email']"):
         email_input.send_keys(cred.email)
         wait_for_element(driver, By.ID, "identifierNext").click()
@@ -177,6 +179,7 @@ class DriverState(Enum):
     PRE_SECTION = 0
     PRE_COURSE = 1
     PRE_FILE = 2
+    NOT_LOGINED = 3
 
 class WhereIsDriver:
     def __init__(self, driver: WebDriver) -> None:
@@ -191,6 +194,7 @@ class WhereIsDriver:
         if search("/.../$|/$", url): return DriverState.PRE_SECTION
         elif search("/.{16}$", url): return DriverState.PRE_COURSE
         elif search("/.{16}/details$", url): return DriverState.PRE_FILE
+        elif search("data:,", url): return DriverState.NOT_LOGINED
 
     def is_correct(self, function: Callable[[WebDriver], Dict[str, str]]) -> bool:
         current_state = WhereIsDriver.of(self.__driver.current_url)
@@ -198,7 +202,8 @@ class WhereIsDriver:
         return \
             current_state is DriverState.PRE_SECTION and function is sections or \
             current_state is DriverState.PRE_COURSE and function is courses or \
-            current_state is DriverState.PRE_FILE and function is files
+            current_state is DriverState.PRE_FILE and function is files or \
+            current_state is DriverState.NOT_LOGINED and function is login_to_google_classroom
     
     def try_execute(self, function: Callable[[WebDriver], Dict[str, str]]) -> Dict[str, str] | None:
         if self.is_correct(function):

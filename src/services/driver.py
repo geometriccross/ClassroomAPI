@@ -72,9 +72,7 @@ class StoredDrivers(List):
             cred=self.__cred
         )
         
-        self.append(
-            self.__instance_gen.__next__()
-        )
+        self.grow()
     
     def __new__(cls, *args, **kwag) -> StoredDrivers:
         if not hasattr(cls, "__instance") or cls.__instance is None:
@@ -85,9 +83,8 @@ class StoredDrivers(List):
         """
         新しいdriverを、内部に保存されているgeneratorから追加する
         """
-        self.append(
-            self.__instance_gen.__next__()
-        )
+        driver = next(self.__instance_gen)
+        self.append(driver)
     
     def shrink(self) -> None:
         """
@@ -101,11 +98,17 @@ class StoredDrivers(List):
             rmtree(driver.capabilities['chrome']['userDataDir'])
             self.__instance_gen = generate_driver_instances(
                 webdriver_profile_generator(self.__profile_dir, len(self)),
-                self.__driver_arguments
+                self.__driver_arguments,
+                self.__cred
             )
     
     def clear(self) -> None:
+        threads: List[Thread] = []
         for driver in self:
-            driver.quit()
-            rmtree(driver.capabilities['chrome']['userDataDir'])
+            threads.append(Thread(target=driver.quit).start())
+            threads.append(Thread(target=rmtree, args=(driver.capabilities['chrome']['userDataDir'],)).start())
+        
+        for thread in threads:
+            thread.join()
+
         return super().clear()

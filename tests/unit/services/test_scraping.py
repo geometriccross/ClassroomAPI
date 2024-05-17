@@ -10,13 +10,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from src.services.driver import generate_driver_instances, webdriver_profile_generator
-from src.services.scraping import scraping
+from src.services.scraping.permission_passing import Credentials
+from src.services.scraping import page_objects as po
 from typing import Generator, Any
 
 load_dotenv(".env")
 
 # 環境変数からログイン情報を取得
-credentials = scraping.Credentials( 
+credentials = Credentials( 
     os.getenv("COLLAGE_EMAIL"),
     os.getenv("COLLAGE_USERNAME"),
     os.getenv("COLLAGE_PASSWORD")
@@ -48,7 +49,7 @@ def test_sections(test_driver: WebDriver):
     test_driver.get(SECTION_TEST_URL)
     
     # セクション（クラス）の要素を取得
-    sections = scraping.sections(test_driver, 10)
+    sections = po.sections(test_driver, 10)
     
     # セクション（クラス）が少なくとも1つ以上存在することを確認
     assert len(sections) > 0, "セクションが存在しません。"
@@ -59,7 +60,7 @@ def test_sections(test_driver: WebDriver):
 def test_courses(test_driver: WebDriver):
     test_driver.get(COURSES_TEST_URL)
     
-    courses = scraping.courses(test_driver, 10)
+    courses = po.courses(test_driver, 10)
     assert len(courses) > 0, "コースが存在しません。"
     for course_name, course_url in courses.items():
         assert course_name is not None
@@ -68,16 +69,16 @@ def test_courses(test_driver: WebDriver):
 def test_files(test_driver: WebDriver):
     test_driver.get(FILES_TEST_URL)
 
-    files = scraping.files(test_driver, 10)
+    files = po.files(test_driver, 10)
     assert len(files) > 0, "ファイルが存在しません。"
     for file_name, file_url in files.items():
         assert file_name is not None
         assert file_url is not None
 
 def test_where_is_driver_of(mocker: pytest_mock.MockFixture):    
-    scraping.WhereIsDriver.of(SECTION_TEST_URL) is scraping.DriverState.PRE_SECTION
-    scraping.WhereIsDriver.of(COURSES_TEST_URL) is scraping.DriverState.PRE_COURSE
-    scraping.WhereIsDriver.of(FILES_TEST_URL) is scraping.DriverState.PRE_FILE
+    po.WhereIsDriver.of(SECTION_TEST_URL) is po.DriverState.PRE_SECTION
+    po.WhereIsDriver.of(COURSES_TEST_URL) is po.DriverState.PRE_COURSE
+    po.WhereIsDriver.of(FILES_TEST_URL) is po.DriverState.PRE_FILE
 
 def test_where_is_driver_check(mocker: pytest_mock.MockFixture):
     mock_driver = mocker.Mock()
@@ -90,16 +91,16 @@ def test_where_is_driver_check(mocker: pytest_mock.MockFixture):
     
     fixtures = [
         # 状態と呼び出す関数が一致する場合
-        fixture("section-section", SECTION_TEST_URL, scraping.sections, True),
-        fixture("course-course", COURSES_TEST_URL, scraping.courses, True),
-        fixture("file-file", FILES_TEST_URL, scraping.files, True),
+        fixture("section-section", SECTION_TEST_URL, po.sections, True),
+        fixture("course-course", COURSES_TEST_URL, po.courses, True),
+        fixture("file-file", FILES_TEST_URL, po.files, True),
         # 一致しない場合
-        fixture("section-course", SECTION_TEST_URL, scraping.courses, False),
-        fixture("course-file", COURSES_TEST_URL, scraping.files, False),
-        fixture("file-section", FILES_TEST_URL, scraping.sections, False)
+        fixture("section-course", SECTION_TEST_URL, po.courses, False),
+        fixture("course-file", COURSES_TEST_URL, po.files, False),
+        fixture("file-section", FILES_TEST_URL, po.sections, False)
     ]
     
     for fix in fixtures:
         mock_driver.current_url = fix.url
-        where_is_driver = scraping.WhereIsDriver(mock_driver)
+        where_is_driver = po.WhereIsDriver(mock_driver)
         assert where_is_driver.is_correct(fix.target_func) is fix.except_result

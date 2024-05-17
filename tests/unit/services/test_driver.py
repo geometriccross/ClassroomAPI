@@ -6,7 +6,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from src.services import driver
-from src.services.scraping.scraping import Credentials
+from src.services.scraping.permission_passing import Credentials
 
 TEST_DIR = Path("tests/chrome_drivers")
 
@@ -14,6 +14,9 @@ load_dotenv(".env")
 
 @pytest.fixture(scope="module")
 def drivers():
+    if path.exists(TEST_DIR):
+        shutil.rmtree(TEST_DIR)
+    
     makedirs(TEST_DIR, exist_ok=True)
     drivers = driver.StoredDrivers(
         profile_dir=TEST_DIR,

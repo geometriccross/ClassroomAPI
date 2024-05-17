@@ -3,75 +3,12 @@ from typing import List, Dict, Callable
 from enum import Enum
 from re import search
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.remote.webdriver import WebDriver
+from .base import *
+from .permission_passing import login_to_google_classroom
 
 import pyperclip
 
-def wait_for_element(driver: webdriver, by: By, value: str, timeout: int = 10) -> WebElement:
-    try:
-        return WebDriverWait(driver, timeout).until(EC.presence_of_element_located((by, value)))
-    except TimeoutException:
-        print(f"Error: Timeout waiting for element by {by} with value {value}")
-        return None
-
-def wait_for_elements(driver: webdriver, by: By, value: str, timeout: int = 10) -> List[WebElement]:
-    try:
-        return WebDriverWait(driver, timeout).until(EC.presence_of_all_elements_located((by, value)))
-    except TimeoutException:
-        print(f"Error: Timeout waiting for element by {by} with value {value}")
-        return None
-
-# googleアカウントにログインするための情報を扱うための型
-class Credentials:
-    def __init__(self, email: str, name: str, password: str) -> None:
-        self.email = email
-        self.name = name
-        self.password = password
-
-def login_to_google_classroom(driver: webdriver, cred: Credentials) -> WebDriver:
-    """
-    Googleアカウントのユーザー名とパスワードを使用して、Google Classroomにログインします。
-    """
-    
-    driver.get("https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fclassroom.google.com&ifkv=ARZ0qKK0GsFwI5PXniQdLUuY_N4_bgWD6xGS9M02CmscmVL7nKgDlaGJRNeJV-QAmwwvP1r-fQ2muA&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S319460678%3A1711092114297087&theme=mn&ddm=0")
-    
-    if email_input := wait_for_element(driver, By.XPATH, "//input[@type='email']"):
-        email_input.send_keys(cred.email)
-        wait_for_element(driver, By.ID, "identifierNext").click()
-    
-    if WebDriverWait(driver, 10).until(EC.url_contains("shibboleth")):
-        login_collage(driver, cred.name, cred.password)
-
-    if next_button := wait_for_element(driver, By.XPATH, "//div[@jsname='Njthtb']"):
-            next_button.click()
-
-    if password_input := wait_for_element(driver, By.CSS_SELECTOR, "#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input"):
-        password_input.send_keys(cred.password)
-        wait_for_element(driver, By.ID, "passwordNext").click()
-
-    return driver
-
-def login_collage(driver: webdriver, username: str, password: str) -> WebDriver:
-    """大学アカウントにログインを要求された場合"""
-    
-    if username_input := wait_for_element(driver, By.XPATH, "//input[@id='j_username']"):
-        username_input.send_keys(username)
-        
-    if password_input := wait_for_element(driver, By.XPATH, "//input[@id='j_password']"):
-        password_input.send_keys(password)
-        
-    if submit_button := wait_for_element(driver, By.XPATH, "//button[@type='submit']"):
-        submit_button.click()
-    
-    return driver
-
-def sections(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
+def sections(driver: WebDriver, timeout: float=10) -> Dict[str, str]:
     """
     Google Classroomのセクション名とURLを取得します。
     
@@ -105,7 +42,7 @@ def sections(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     else:
         raise ValueError("Error: The number of keys and urls do not match.")
 
-def courses(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
+def courses(driver: WebDriver, timeout: float=10) -> Dict[str, str]:
     """
     Google Classroomのコース名とURLを取得します。
 
@@ -152,7 +89,7 @@ def courses(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
     if len(keys) == len(urls):
         return dict(zip(keys, urls))
 
-def files(driver: webdriver.Chrome, timeout: float=10) -> Dict[str, str]:
+def files(driver: WebDriver, timeout: float=10) -> Dict[str, str]:
     elements = wait_for_elements(
         driver=driver,
         by=By.XPATH,

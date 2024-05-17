@@ -9,7 +9,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.chrome.options import Options
 
-from .scraping.scraping import Credentials, login_to_google_classroom
+from .scraping.permission_passing import Credentials, login_to_google_classroom
 
 def webdriver_profile_generator(prefix: Path, default_index: int = 0) -> Generator[Path, None, None]:
     """

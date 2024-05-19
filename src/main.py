@@ -6,8 +6,7 @@ from logging import Logger, getLogger
 
 import dependencies as dep
 from services.driver import StoredDrivers
-from routers.driver import driver_router
-from routers.scraping import scraping_router
+from routers.scraping_endpoint import scraping_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,6 +14,8 @@ async def lifespan(app: FastAPI):
         profile_dir = Path(getenv("APPDATA")).joinpath("classroomAPI/chromedrivers"),
         driver_arguments = ["--headless=new"]
     )
+    
+    dep.__stored_drivers = __stored_drivers
 
     try:
         yield
@@ -22,7 +23,6 @@ async def lifespan(app: FastAPI):
         __stored_drivers.clear()
 
 app = FastAPI(lifespan=lifespan)
-app.include_router(driver_router)
 app.include_router(scraping_router)
 
 @app.get("/")

@@ -25,14 +25,15 @@ def drivers():
     if not email or not username or not password:
         pytest.skip("環境変数が設定されていないため、テストをスキップします")
 
-    makedirs(TEST_DIR, exist_ok=True)
-    drivers = driver.StoredDrivers(
-        profile_dir=TEST_DIR,
-        driver_args=["--headless=new"],
-        cred=Credentials(email, username, password),
-    )
-
+    drivers: driver.StoredDrivers | None = None
     try:
+        makedirs(TEST_DIR, exist_ok=True)
+        drivers = driver.StoredDrivers(
+            profile_dir=TEST_DIR,
+            driver_args=["--headless=new"],
+            cred=Credentials(email, username, password),
+        )
+
         yield drivers
     finally:
         drivers.clear()

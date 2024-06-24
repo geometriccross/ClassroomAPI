@@ -1,16 +1,18 @@
 import os
 import shutil
 from pathlib import Path
+from time import time
 
 import pytest
 from dotenv import load_dotenv
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.webdriver import WebDriver
 
 from src.services.driver import generate_driver_instances, webdriver_profile_generator
 from src.services.scraping import page_objects as po
 from src.services.scraping.permission_passing import Credentials
-
-load_dotenv(".env")
 
 
 def get_env(key: str) -> str:
@@ -21,13 +23,6 @@ def get_env(key: str) -> str:
         return value
 
 
-# 環境変数からログイン情報を取得
-credentials = Credentials(
-    email=get_env("COLLAGE_USERNAME"),
-    name=get_env("COLLAGE_USERNAME"),
-    password=get_env("COLLAGE_PASSWORD"),
-)
-
 LOGIN_URL = get_env("LOGIN_URL")
 SECTION_TEST_URL = get_env("SECTION_TEST_URL")
 COURSES_TEST_URL = get_env("COURSES_TEST_URL")
@@ -35,14 +30,26 @@ FILES_TEST_URL = get_env("FILES_TEST_URL")
 
 
 @pytest.fixture
-def test_driver():
+def cred() -> Credentials:
+    load_dotenv(".env")
+
+    # 環境変数からログイン情報を取得
+    return Credentials(
+        email=get_env("COLLAGE_EMAIL"),
+        name=get_env("COLLAGE_USERNAME"),
+        password=get_env("COLLAGE_PASSWORD"),
+    )
+
+
+@pytest.fixture
+def test_driver(cred: Credentials):
     test_dir = Path("test/chrome_drivers")
     test_dir.mkdir(parents=True, exist_ok=True)
 
     driver_generator = generate_driver_instances(
         profile_gen=webdriver_profile_generator(test_dir),
         driver_arguments=["--headless=new"],
-        cred=credentials,
+        cred=cred,
     )
 
     driver = next(driver_generator)
@@ -50,6 +57,24 @@ def test_driver():
 
     driver.quit()
     shutil.rmtree(test_dir)
+
+
+def test_login(cred: Credentials):
+    TEST_DIR = Path("tests/chrome_drivers")
+    if TEST_DIR.exists():
+        shutil.rmtree(TEST_DIR)
+
+    random_dir = TEST_DIR.joinpath(str(hash(time())))
+
+    options = Options()
+    options.add_argument("--headless=new")
+
+    try:
+        driver = webdriver.Chrome(options=options)
+        po.login_to_google_classroom(driver, cred)
+    finally:
+        if random_dir.exists():
+            shutil.rmtree(random_dir)
 
 
 def test_sections(test_driver: WebDriver):

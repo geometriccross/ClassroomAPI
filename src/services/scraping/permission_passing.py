@@ -1,3 +1,4 @@
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support import expected_conditions as EC
@@ -32,15 +33,18 @@ def login_to_google_classroom(driver: WebDriver, cred: Credentials) -> WebDriver
     if next_button := wait_for_element(driver, By.XPATH, "//div[@jsname='Njthtb']"):
         next_button.click()
 
-    if password_input := wait_for_element(
-        driver,
-        By.CSS_SELECTOR,
-        "#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input",
-    ):
-        password_input.send_keys(cred.password)
-        wait_for_element(driver, By.ID, "passwordNext").click()
-
-    return driver
+    # パスワードを要求されたりされなかったりするため
+    if WebDriverWait(driver, 5).until(EC.url_contains("accounts.google.com")):
+        return driver
+    else:
+        if password_input := wait_for_element(
+            driver,
+            By.CSS_SELECTOR,
+            "#password > div.aCsJod.oJeWuf > div > div.Xb9hP > input",
+        ):
+            password_input.send_keys(cred.password)
+            wait_for_element(driver, By.ID, "passwordNext").click()
+        return driver
 
 
 def login_collage(driver: WebDriver, username: str, password: str) -> WebDriver:

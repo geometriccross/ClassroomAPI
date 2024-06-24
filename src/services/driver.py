@@ -86,10 +86,15 @@ class StoredDrivers(List):
 
         self.grow()
 
-    def __new__(cls, profile_dir: Path, driver_args: List[str], cred: Credentials) -> StoredDrivers:
+    def __new__(cls, **kwag) -> StoredDrivers:
         if not hasattr(cls, "__instance") or getattr(cls, "__instance") is None:
-            cls.__instance = StoredDrivers(profile_dir, driver_args, cred)
-        return cls.__instance
+            cls.__instance = super().__new__(cls)
+            for k, v in kwag.items():
+                setattr(cls.__instance, k, v)
+
+            return cls.__instance
+        else:
+            return cls.__instance
 
     def grow(self) -> None:
         """

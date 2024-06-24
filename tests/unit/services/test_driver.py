@@ -36,7 +36,7 @@ def drivers():
 
         yield drivers
     finally:
-        drivers.clear()
+        drivers.clear()  # type: ignore
         if path.exists(TEST_DIR):
             shutil.rmtree(TEST_DIR)
 

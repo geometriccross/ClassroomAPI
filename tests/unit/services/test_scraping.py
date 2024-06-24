@@ -7,7 +7,6 @@ import pytest
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.webdriver import WebDriver
 
 from src.services.driver import generate_driver_instances, webdriver_profile_generator

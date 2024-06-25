@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from enum import Enum
-from re import search
+from re import match
 from typing import Callable, Dict
 
 from pyperclip import paste
@@ -11,7 +10,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import wait_for_elements
-from .permission_passing import login_to_google_classroom
 
 
 def sections(driver: WebDriver, timeout: float = 10) -> Dict[str, str]:
@@ -113,56 +111,45 @@ def files(driver: WebDriver, timeout: float = 10) -> Dict[str, str]:
         raise ValueError("Error: The number of keys and urls do not match.")
 
 
-class DriverState(Enum):
-    """
-    WebDriverの状態を表す列挙型
-    """
-
-    OUT_CONTROL = -1
-    PRE_SECTION = 0
-    PRE_COURSE = 1
-    PRE_FILE = 2
-    NOT_LOGINED = 3
-
-
-class WhereIsDriver:
-    def __init__(self, driver: WebDriver) -> None:
-        self.__driver = driver
-        super().__init__()
+class Page:
+    def __init__(self, driver: WebDriver, timeout: float = 10.0) -> None:
+        self.driver: WebDriver = driver
+        self.timeout: float = timeout
 
     @staticmethod
-    def of(url: str) -> DriverState:
+    def id_extract(f) -> Callable[[], Dict[str, str]]:
         """
-        渡されたdriverのurlを判断し、状態を返します。
+        この関数は以下の通りの文字列を変換する \n
+        ~classroom/u/3/c/NjczNTk2Nzg1MTA0 to NjczNTk2Nzg1MTA0 \n
+        ~classroom/u/3/c/NjczNTk2Nzg1MTA0/m/NjczNTk2Nzg1MTI4/details to NjczNTk2Nzg1MTI4
         """
 
-        if search("/.../$|/$", url):
-            return DriverState.PRE_SECTION
-        elif search("/.{16}$", url):
-            return DriverState.PRE_COURSE
-        elif search("/.{16}/details$", url):
-            return DriverState.PRE_FILE
-        elif search("data:,", url):
-            return DriverState.NOT_LOGINED
-        else:
-            return DriverState.OUT_CONTROL
+        def __wrapper(*args, **kwargs) -> Dict[str, str]:
 
-    def is_correct(self, function: Callable[[WebDriver], Dict[str, str]]) -> bool:
-        current_state = WhereIsDriver.of(self.__driver.current_url)
+            result = {}
+            for k, v in f(*args, **kwargs).items():
+                id = pattern if (pattern := ("/.{16}/details$", v)) else match("/.{16}$", v)
+                result[k] = id
 
-        return (
-            current_state is DriverState.PRE_SECTION
-            and function is sections
-            or current_state is DriverState.PRE_COURSE
-            and function is courses
-            or current_state is DriverState.PRE_FILE
-            and function is files
-            or current_state is DriverState.NOT_LOGINED
-            and function is login_to_google_classroom
-        )
+            return result
 
-    def try_execute(self, function: Callable[[WebDriver], Dict[str, str]]) -> Dict[str, str] | None:
-        if self.is_correct(function):
-            return function(self.__driver)
-        else:
-            return None
+        return __wrapper
+
+    # wrapper functions
+    @id_extract
+    def sections(self) -> Dict[str, str]:
+        """
+        Google Classroomのセクション名とURLを取得します。
+        """
+        return sections(self.driver, self.timeout)
+
+    @id_extract
+    def courses(self) -> Dict[str, str]:
+        """
+        Google Classroomのコース名とURLを取得します。
+        """
+        return courses(self.driver, self.timeout)
+
+    @id_extract
+    def files(self) -> Dict[str, str]:
+        return files(self.driver, self.timeout)

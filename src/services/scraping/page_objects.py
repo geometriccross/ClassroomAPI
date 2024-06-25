@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from re import search
-from typing import Callable, Dict
+from typing import Dict
 
 from pyperclip import paste
 from selenium.webdriver.common.by import By
@@ -117,50 +117,32 @@ class Page:
         self.timeout: float = timeout
 
     @staticmethod
-    def id_extract(f) -> Callable[[], Dict[str, str]]:
+    def id_extract(url: str) -> str:
         """
         この関数は以下の通りの文字列を変換する \n
         ~classroom/u/3/c/NjczNTk2Nzg1MTA0 to NjczNTk2Nzg1MTA0 \n
         ~classroom/u/3/c/NjczNTk2Nzg1MTA0/m/NjczNTk2Nzg1MTI4/details to NjczNTk2Nzg1MTI4
         """
 
-        def __wrapper(*args, **kwargs) -> Dict[str, str]:
-
-            result = {}
-            for k, v in f(*args, **kwargs).items():
-                pattern = (
-                    p if (p := search(".{16}/details$", v)) is not None else search("/.{16}$", v)
-                )
-
-                id = None
-                if pattern := search(".{16}/details$", v):
-                    id = pattern.group().split("/")[0]
-                    result[k] = id
-                elif pattern := search("/.{16}$", v):
-                    id = pattern.group().replace("/", "")
-                    result[k] = id
-                else:
-                    result[k] = ""
-
-            return result
-
-        return __wrapper
+        if pattern := search(".{16}/details$", url):
+            return pattern.group().split("/")[0]
+        elif pattern := search("/.{16}$", url):
+            return pattern.group().replace("/", "")
+        else:
+            return ""
 
     # wrapper functions
-    @id_extract
     def sections(self) -> Dict[str, str]:
         """
         Google Classroomのセクション名とURLを取得します。
         """
         return sections(self.driver, self.timeout)
 
-    @id_extract
     def courses(self) -> Dict[str, str]:
         """
         Google Classroomのコース名とURLを取得します。
         """
         return courses(self.driver, self.timeout)
 
-    @id_extract
     def files(self) -> Dict[str, str]:
         return files(self.driver, self.timeout)

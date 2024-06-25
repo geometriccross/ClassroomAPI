@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from re import match
+from re import search
 from typing import Callable, Dict
 
 from pyperclip import paste
@@ -128,8 +128,19 @@ class Page:
 
             result = {}
             for k, v in f(*args, **kwargs).items():
-                id = pattern if (pattern := ("/.{16}/details$", v)) else match("/.{16}$", v)
-                result[k] = id
+                pattern = (
+                    p if (p := search(".{16}/details$", v)) is not None else search("/.{16}$", v)
+                )
+
+                id = None
+                if pattern := search(".{16}/details$", v):
+                    id = pattern.group().split("/")[0]
+                    result[k] = id
+                elif pattern := search("/.{16}$", v):
+                    id = pattern.group().replace("/", "")
+                    result[k] = id
+                else:
+                    result[k] = ""
 
             return result
 

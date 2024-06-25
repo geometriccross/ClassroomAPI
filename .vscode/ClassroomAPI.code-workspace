@@ -1,0 +1,52 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+	],
+	"settings": {
+		"[python]": {
+			"editor.defaultFormatter": "ms-python.black-formatter",
+			"editor.formatOnSave": true,
+			"editor.formatOnType": true,
+			"editor.codeActionsOnSave": {
+				"source.organizeImports": "always"
+			},
+			"editor.rulers": [
+				100
+			],
+		},
+		"black-formatter.args": [
+			"--line-length",
+			"100"
+		],
+		"isort.args": [
+			"--profile",
+			"black"
+		],
+		"flake8.args": [
+			"--max-line-length=100",
+			"--max-complexity=10",
+		],
+		"flake8.ignorePatterns": [
+			"**/literals.py",
+		],
+		"python.analysis.typeCheckingMode": "standard",
+		"python.analysis.ignore": [
+			"**/temp.py",
+			"**literals.py",
+		]
+	},
+	"extensions": {
+		"recommendations": [
+			"kevinrose.vsc-python-indent",
+			"donjayamanne.python-environment-manager",
+			"mhutchie.git-graph",
+			"ms-python.python",
+			"ms-python.vscode-pylance",
+			"ms-python.black-formatter",
+			"ms-python.flake8",
+			"ms-python.isort"
+		]
+	}
+}

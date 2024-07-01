@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from re import search
 from typing import Dict
 
 from pyperclip import paste
@@ -9,6 +10,21 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import wait_for_elements
+
+
+def id_extract(url: str) -> str:
+    """
+    この関数は以下の通りの文字列を変換する \n
+    ~classroom/u/3/c/NjczNTk2Nzg1MTA0 to NjczNTk2Nzg1MTA0 \n
+    ~classroom/u/3/c/NjczNTk2Nzg1MTA0/m/NjczNTk2Nzg1MTI4/details to NjczNTk2Nzg1MTI4
+    """
+
+    if pattern := search(".{16}/details$", url):
+        return pattern.group().split("/")[0]
+    elif pattern := search("/.{16}$", url):
+        return pattern.group().replace("/", "")
+    else:
+        return ""
 
 
 def sections(driver: WebDriver, timeout: float = 10) -> Dict[str, str]:

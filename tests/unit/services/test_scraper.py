@@ -1,11 +1,33 @@
 from conftest import get_env
 from selenium.webdriver.chrome.webdriver import WebDriver
 
-from src.services.scraping.scraper import courses, sections
+from src.services.scraping.scraper import courses, id_extract, sections
 
 SECTION_TEST_URL = get_env("SECTION_TEST_URL")
 COURSES_TEST_URL = get_env("COURSES_TEST_URL")
 FILES_TEST_URL = get_env("FILES_TEST_URL")
+
+
+def test_Page_id_extract():
+    test_urls = [
+        {
+            "data": "https://classroom.google.com/u/3/c/NjcyOTEyOTk2Nzgx",
+            "expected": "NjcyOTEyOTk2Nzgx",
+        },
+        {
+            "data": "https://classroom.google.com/u/3/c/NjcyOTEyOTk2Nzgx/m/NjkwNTE0Njc3NDA3/details",  # noqa: E501
+            "expected": "NjkwNTE0Njc3NDA3",
+        },
+        {
+            "data": "https://classroom.google.com/u/3/c/NjcyOTEyOTk2Nzgx/m/NjkwNTE0Njc3NDA3/submissions/by-status/all-students/late",  # noqa: E501
+            "expected": "",
+        },
+    ]
+
+    for param in test_urls:
+        data, expected = param.values()
+        id = id_extract(data)
+        assert id == expected
 
 
 def test_sections(test_driver: WebDriver):

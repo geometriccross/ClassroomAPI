@@ -7,3 +7,4 @@ sandbox
 .env
 temp.py
 .pytest_cache
+test.db

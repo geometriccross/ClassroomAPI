@@ -4,7 +4,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 from .base import wait_for_element
-from .literals import LOGIN_URL
 
 
 # googleアカウントにログインするための情報を扱うための型
@@ -20,7 +19,9 @@ def login_to_google_classroom(driver: WebDriver, cred: Credentials) -> WebDriver
     Googleアカウントのユーザー名とパスワードを使用して、Google Classroomにログインします。
     """
 
-    driver.get(LOGIN_URL)
+    driver.get(
+        "https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fclassroom.google.com&ifkv=ARZ0qKK0GsFwI5PXniQdLUuY_N4_bgWD6xGS9M02CmscmVL7nKgDlaGJRNeJV-QAmwwvP1r-fQ2muA&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S319460678%3A1711092114297087&theme=mn&ddm=0"  # noqa: E501
+    )
 
     if email_input := wait_for_element(driver, By.XPATH, "//input[@type='email']"):
         email_input.send_keys(cred.email)

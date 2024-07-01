@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from re import search
 from typing import Dict
 
 from pyperclip import paste
@@ -109,40 +108,3 @@ def files(driver: WebDriver, timeout: float = 10) -> Dict[str, str]:
         return dict(zip(keys, urls))
     else:
         raise ValueError("Error: The number of keys and urls do not match.")
-
-
-class Page:
-    def __init__(self, driver: WebDriver, timeout: float = 10.0) -> None:
-        self.driver: WebDriver = driver
-        self.timeout: float = timeout
-
-    @staticmethod
-    def id_extract(url: str) -> str:
-        """
-        この関数は以下の通りの文字列を変換する \n
-        ~classroom/u/3/c/NjczNTk2Nzg1MTA0 to NjczNTk2Nzg1MTA0 \n
-        ~classroom/u/3/c/NjczNTk2Nzg1MTA0/m/NjczNTk2Nzg1MTI4/details to NjczNTk2Nzg1MTI4
-        """
-
-        if pattern := search(".{16}/details$", url):
-            return pattern.group().split("/")[0]
-        elif pattern := search("/.{16}$", url):
-            return pattern.group().replace("/", "")
-        else:
-            return ""
-
-    # wrapper functions
-    def sections(self) -> Dict[str, str]:
-        """
-        Google Classroomのセクション名とURLを取得します。
-        """
-        return sections(self.driver, self.timeout)
-
-    def courses(self) -> Dict[str, str]:
-        """
-        Google Classroomのコース名とURLを取得します。
-        """
-        return courses(self.driver, self.timeout)
-
-    def files(self) -> Dict[str, str]:
-        return files(self.driver, self.timeout)
